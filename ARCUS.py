@@ -129,10 +129,13 @@ class ARCUS:
         drift_hist = []
         losses     = []
         all_scores = []
-        
+
+
         # Scenario for online anomaly detection
         try:    
             for step, (x_inp, y_inp) in enumerate(loader.batch(self._batch_size)):
+                print("step: ",step )
+                print("loader.element_spec[0].shape[0]: ", loader.element_spec[0].shape[0])
                 # Initial model training
                 if step == 0:
                     tmp_losses = self._train_model(initial_model, x_inp, self._init_epoch)
@@ -144,8 +147,13 @@ class ARCUS:
                 else:
                     scores = []
                     model_reliabilities = []
+                    print("len(models)", len(self.model_pool))
                     for m in self.model_pool:
-                        scores.append(m.inference_step(x_inp))
+                        
+                        sc=m.inference_step(x_inp)
+                        print("model: ",m)
+                        
+                        scores.append(sc)
                         curr_mean_score = np.mean(scores[-1])
                         curr_max_score = np.max(scores[-1])
                         curr_min_score = np.min(scores[-1])
@@ -175,8 +183,10 @@ class ARCUS:
                 else:
                     pool_reliability = 1-np.prod([1-p for p in model_reliabilities])
                     if pool_reliability < self._reliability_thred:
+                        print("drift...")
                         drift = True
                     else:
+                        print("not drift...")
                         drift = False
 
                 # Model adaptation
